@@ -1,14 +1,14 @@
 [submodule "lib/Sakaar-Struct"]
 	path = lib/Sakaar-Struct
 	url = https://github.com/Sakaar-BlockChain/Sakaar-Struct
-	branch = master
+	branch = main
 
 [submodule "lib/Sakaar-CryptoBase"]
 	path = lib/Sakaar-CryptoBase
 	url = https://github.com/Sakaar-BlockChain/Sakaar-CryptoBase
-	branch = master
+	branch = main
 
 [submodule "lib/Sakaar-NetWork"]
 	path = lib/Sakaar-NetWork
 	url = https://github.com/Sakaar-BlockChain/Sakaar-NetWork
-	branch = master
+	branch = main
