@@ -3,12 +3,6 @@ project(Sakaar C)
 
 set(CMAKE_C_STANDARD 99)
 
-if(NOT TARGET Sakaar_Memory_lib)
-    add_subdirectory(lib/Sakaar-Memory)
-    link_directories(lib/Sakaar-Memory)
-    MESSAGE(STATUS "Connected: Sakaar_Memory_lib")
-endif()
-
 if(NOT TARGET Sakaar_Struct_lib)
     add_subdirectory(lib/Sakaar-Struct)
     link_directories(lib/Sakaar-Struct)
