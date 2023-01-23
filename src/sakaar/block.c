@@ -281,7 +281,12 @@ void block_set_tlv(struct block_st *res, const struct string_st *tlv) {
     string_set_tlv(res->address_outside, _tlv);
 
     data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->hash, _tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, _tlv);
+        integer_get_str(num, res->hash);
+        integer_free(num);
+    }
 
     data = tlv_get_next_tlv(data, _tlv);
     string_set_tlv(res->smart_contract, _tlv);
@@ -316,7 +321,12 @@ void block_get_tlv(const struct block_st *block, struct string_st *res) {
     string_get_tlv(block->address_outside, tlv);
     string_concat(res, tlv);
 
-    string_get_tlv(block->hash, tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, block->hash);
+        integer_get_tlv(num, tlv);
+        integer_free(num);
+    }
     string_concat(res, tlv);
 
     string_get_tlv(block->smart_contract, tlv);

@@ -157,7 +157,12 @@ void generation_set_tlv(struct generation *res, const struct string_st *tlv) {
     integer_set_tlv(res->time, _tlv);
 
     data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->hash, _tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, _tlv);
+        integer_get_str(num, res->hash);
+        integer_free(num);
+    }
 
     tlv_get_next_tlv(data, _tlv);
     string_set_tlv(res->data, _tlv);
@@ -171,7 +176,12 @@ void generation_get_tlv(const struct generation *gen, struct string_st *res) {
     struct string_st *tlv = string_new();
     integer_get_tlv(gen->time, res);
 
-    string_get_tlv(gen->hash, tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, gen->hash);
+        integer_get_tlv(num, tlv);
+        integer_free(num);
+    }
     string_concat(res, tlv);
 
     string_get_tlv(gen->data, tlv);

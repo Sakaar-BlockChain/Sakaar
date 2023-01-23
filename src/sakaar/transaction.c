@@ -139,7 +139,12 @@ void transaction_set_tlv(struct transaction_st *res, const struct string_st *tlv
     integer_set_tlv(res->balance_from, _tlv);
 
     data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->hash_from, _tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, _tlv);
+        integer_get_str(num, res->hash_from);
+        integer_free(num);
+    }
 
     tlv_get_next_tlv(data, _tlv);
     string_set_tlv(res->signature, _tlv);
@@ -168,7 +173,12 @@ void transaction_get_tlv(const struct transaction_st *account_conn, struct strin
     integer_get_tlv(account_conn->balance_from, tlv);
     string_concat(res, tlv);
 
-    string_get_tlv(account_conn->hash_from, tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, account_conn->hash_from);
+        integer_get_tlv(num, tlv);
+        integer_free(num);
+    }
     string_concat(res, tlv);
 
     string_get_tlv(account_conn->signature, tlv);

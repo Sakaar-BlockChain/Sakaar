@@ -88,10 +88,20 @@ void wallet_data_set_tlv(struct wallet_data *res, const struct string_st *tlv) {
     string_set_tlv(res->address_outside, _tlv);
 
     data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->hash, _tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, _tlv);
+        integer_get_str(num, res->hash);
+        integer_free(num);
+    }
 
     data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->pre_hash, _tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, _tlv);
+        integer_get_str(num, res->pre_hash);
+        integer_free(num);
+    }
 
     data = tlv_get_next_tlv(data, _tlv);
     integer_set_tlv(res->balance, _tlv);
@@ -114,10 +124,20 @@ void wallet_data_get_tlv(const struct wallet_data *data, struct string_st *res) 
     string_get_tlv(data->address_outside, tlv);
     string_concat(res, tlv);
 
-    string_get_tlv(data->hash, tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, data->hash);
+        integer_get_tlv(num, tlv);
+        integer_free(num);
+    }
     string_concat(res, tlv);
 
-    string_get_tlv(data->pre_hash, tlv);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, data->pre_hash);
+        integer_get_tlv(num, tlv);
+        integer_free(num);
+    }
     string_concat(res, tlv);
 
     integer_get_tlv(data->balance, tlv);

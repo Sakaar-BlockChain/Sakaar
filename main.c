@@ -199,16 +199,40 @@ int block_check(const struct block_st *block);
 void blocks_restore();
 
 int main() {
-    main_config = config_new();
-    make_first();
+    struct string_st *str = string_new();
+    string_set_str(str, "123", 3);
+    sha256_code._code(str, str);
+    print_str(str);
 
-    config_server_start();
-    sleep(10000);
+    struct string_st *tlv = string_new();
 
-    config_server_close();
-    sleep(1);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_str(num, str);
+        integer_get_tlv(num, tlv);
+    }
+    print_tlv(tlv);
 
-    config_free(main_config);
+    {
+        struct integer_st *num = integer_new();
+        integer_set_tlv(num, tlv);
+        integer_get_str(num, str);
+    }
+    print_str(str);
+
+
+
+
+//    main_config = config_new();
+//    make_first();
+//
+//    config_server_start();
+//    sleep(10000);
+//
+//    config_server_close();
+//    sleep(1);
+//
+//    config_free(main_config);
     printf("LEFT : %zu\n", mem_ctx.filled);
 }
 //    struct skr_object *expr_obj = object_new();
