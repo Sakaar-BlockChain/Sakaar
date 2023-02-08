@@ -1,6 +1,45 @@
 #include "sakaar.h"
 #include "crypto_base.h"
 
+int che_generation_wallet_create(const struct generation *res);
+int che_generation_account_username(const struct generation *res);
+int che_generation_block_create(const struct generation *res);
+int che_generation_block_result(const struct generation *res);
+
+int generation_check(const struct generation *res) {
+    if (!generate_check_hash(res)) return 0;
+    switch (tlv_get_tag(res->data->data)) {
+        case TLV_SMRT_WALLET_CREATE:
+            return che_generation_wallet_create(res);
+        case TLV_GEN_ACCOUNT_USERNAME:
+            return che_generation_account_username(res);
+        case TLV_GEN_BLOCK_CREATE:
+            return che_generation_block_create(res);
+        case TLV_GEN_BLOCK_RESULT:
+            return che_generation_block_result(res);
+    }
+    return 0;
+}
+
+void mk_generation_wallet_create(const struct generation *res);
+void mk_generation_account_username(const struct generation *res);
+void mk_generation_block_create(const struct generation *res);
+void mk_generation_block_result(const struct generation *res);
+
+void generation_make(const struct generation *res) {
+    switch (tlv_get_tag(res->data->data)) {
+        case TLV_SMRT_WALLET_CREATE:
+            return mk_generation_wallet_create(res);
+        case TLV_GEN_ACCOUNT_USERNAME:
+            return mk_generation_account_username(res);
+        case TLV_GEN_BLOCK_CREATE:
+            return mk_generation_block_create(res);
+        case TLV_GEN_BLOCK_RESULT:
+            return mk_generation_block_result(res);
+    }
+}
+
+// Local Files Methods
 void file_write(const struct string_st *path, const struct string_st *data) {
     if (path == NULL || data == NULL) return;
 
@@ -36,61 +75,7 @@ int file_remove(const struct string_st *path) {
     return path == NULL || !remove(path->data);
 }
 
-
-struct generation *generation_new() {
-    struct generation *res = skr_malloc(sizeof(struct generation));
-    res->time = integer_new();
-    res->hash = string_new();
-    res->data = string_new();
-
-    integer_set_time(res->time);
-    return res;
-}
-void generation_set(struct generation *res, const struct generation *a) {
-    if (a == NULL) return generation_clear(res);
-
-    integer_set(res->time, a->time);
-    string_set(res->hash, a->hash);
-    string_set(res->data, a->data);
-}
-void generation_clear(struct generation *res) {
-    integer_clear(res->time);
-    string_clear(res->hash);
-    string_clear(res->data);
-}
-void generation_free(struct generation *res) {
-    integer_free(res->time);
-    string_free(res->hash);
-    string_free(res->data);
-    skr_free(res);
-}
-
-
-void generate_make_hash(struct generation *res) {
-    if (res == NULL) return;
-
-    struct string_st *hash = string_new();
-
-    integer_get_str(res->time, hash);
-    string_concat(hash, res->data);
-
-    sha256_code._code(res->hash, hash);
-    string_free(hash);
-}
-int generate_check_hash(const struct generation *res) {
-    if (res == NULL) return 0;
-
-    struct string_st *hash = string_new();
-
-    integer_get_str(res->time, hash);
-    string_concat(hash, res->data);
-
-    sha256_code._code(hash, hash);
-    int result = (string_cmp(hash, res->hash) == 0);
-    string_free(hash);
-    return result;
-}
-
+// Local Data Methods
 void history_generation_get(struct list_st *list, const struct integer_st *time_from, const struct integer_st *time_to) {
     if (list == NULL) return;
     list_clear(list);
@@ -140,56 +125,6 @@ void generation_get(struct generation *res, const struct string_st *hash, const 
     if (main_config->_is_server) return generation_load(res, hash, time);
     return generation_request(res, hash, time);
 }
-
-
-int che_generation_wallet_create(const struct generation *res);
-int che_generation_account_username(const struct generation *res);
-int che_generation_block_create(const struct generation *res);
-int che_generation_block_result(const struct generation *res);
-
-int generation_check(const struct generation *res) {
-    if (!generate_check_hash(res)) return 0;
-    switch (tlv_get_tag(res->data->data)) {
-        case TLV_SMRT_WALLET_CREATE:
-            return che_generation_wallet_create(res);
-        case TLV_GEN_ACCOUNT_USERNAME:
-            return che_generation_account_username(res);
-        case TLV_GEN_BLOCK_CREATE:
-            return che_generation_block_create(res);
-        case TLV_GEN_BLOCK_RESULT:
-            return che_generation_block_result(res);
-    }
-    return 0;
-}
-
-void mk_generation_wallet_create(const struct generation *res);
-void mk_generation_account_username(const struct generation *res);
-void mk_generation_block_create(const struct generation *res);
-void mk_generation_block_result(const struct generation *res);
-
-void generation_make(const struct generation *res) {
-    switch (tlv_get_tag(res->data->data)) {
-        case TLV_SMRT_WALLET_CREATE:
-            return mk_generation_wallet_create(res);
-        case TLV_GEN_ACCOUNT_USERNAME:
-            return mk_generation_account_username(res);
-        case TLV_GEN_BLOCK_CREATE:
-            return mk_generation_block_create(res);
-        case TLV_GEN_BLOCK_RESULT:
-            return mk_generation_block_result(res);
-    }
-}
-int generation_work(const struct generation *res) {
-    if (!main_config->_is_server) return 1;
-    if (!generation_check(res)) return 0;
-    generation_make(res);
-    unsigned tag = tlv_get_tag(res->data->data);
-    if (tag == TLV_GEN_BLOCK_CREATE || tag == TLV_GEN_BLOCK_RESULT)
-        generation_save_local(res);
-    return 1;
-}
-
-
 void generation_save_local(const struct generation *gen) {
     if (gen == NULL) return;
 
@@ -256,6 +191,7 @@ void generation_load(struct generation *gen, const struct string_st *hash, const
     string_free(path);
 }
 
+// NetWork Methods
 void generation_request(struct generation *res, const struct string_st *hash, const struct integer_st *time) {
     struct string_st *req = string_new();
     struct string_st *resp = string_new();
@@ -366,8 +302,37 @@ void history_generation_response(struct string_st *res, const struct string_st *
     list_free(list_history);
 }
 
+// Class Methods
+void generate_make_hash(struct generation *res) {
+    if (res == NULL) return;
 
+    struct string_st *hash = string_new();
 
+    integer_get_str(res->time, hash);
+    string_concat(hash, res->data);
 
+    sha256_code._code(res->hash, hash);
+    string_free(hash);
+}
+int generate_check_hash(const struct generation *res) {
+    if (res == NULL) return 0;
 
+    struct string_st *hash = string_new();
 
+    integer_get_str(res->time, hash);
+    string_concat(hash, res->data);
+
+    sha256_code._code(hash, hash);
+    int result = (string_cmp(hash, res->hash) == 0);
+    string_free(hash);
+    return result;
+}
+int generation_work(const struct generation *res) {
+    if (!main_config->_is_server) return 1;
+    if (!generation_check(res)) return 0;
+    generation_make(res);
+    unsigned tag = tlv_get_tag(res->data->data);
+    if (tag == TLV_GEN_BLOCK_CREATE || tag == TLV_GEN_BLOCK_RESULT)
+        generation_save_local(res);
+    return 1;
+}

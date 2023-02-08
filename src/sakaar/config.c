@@ -4,36 +4,36 @@
 struct config_st *main_config = NULL;
 
 
-void config_save_local(const struct config_st *config) {
-    if (config == NULL) return;
+void blocks_restore();
+int block_check(const struct block_st *block);
+void block_save(const struct block_st *block, int result);
 
-    struct string_st *path = string_new();
-    struct string_st *tlv = string_new();
-
-    string_set_str(path, ".data", 5);
-    mkdir(path->data, 0777);
-
-    string_set_str(path, ".data/config.skr", 19);
-
-    config_get_tlv(config, tlv);
-    file_write(path, tlv);
-
-    string_free(tlv);
-    string_free(path);
+void *block_checker(void *arg) {
+    struct block_st *block = block_new();
+    int result;
+    while (main_config->_is_server) {
+        if (!integer_is_null(main_config->account->activated)) {
+            block_get_optimal_unchecked(block);
+            if (!block_is_null(block)) {
+                result = block_check(block);
+                cre_generation_block_result(block, result, main_config->account, main_config->key);
+            }
+        }
+        {
+            block_get_optimal_checked(block, &result);
+            if (!block_is_null(block)) {
+                if (result) {
+                    block_save(block, 1);
+                } else {
+                    block_save(block, 0);
+                }
+            }
+        }
+    }
+    block_free(block);
+    return NULL;
 }
-void config_load(struct config_st *config) {
-    if (config == NULL) return;
 
-    struct string_st *path = string_new();
-    struct string_st *tlv = string_new();
-    string_set_str(path, ".data/config.skr", 19);
-
-    file_read(path, tlv);
-    if (tlv->size != 0) config_set_tlv(config, tlv);
-
-    string_free(tlv);
-    string_free(path);
-}
 
 void config_request_get(const struct string_st *data, struct string_st *response) {
     if (response == NULL) return;
@@ -78,7 +78,7 @@ int config_request_send(const struct string_st *data) {
     return _result;
 }
 
-
+// Standard operations
 struct config_st *config_new() {
     struct config_st *res = skr_malloc(sizeof(struct config_st));
 
@@ -116,35 +116,81 @@ void config_free(struct config_st *res) {
     skr_free(res);
 }
 
-void blocks_restore();
-int block_check(const struct block_st *block);
-void block_save(const struct block_st *block, int result);
-void *block_checker(void *arg) {
-    struct block_st *block = block_new();
-    int result;
-    while (main_config->_is_server) {
-        if (!integer_is_null(main_config->account->activated)) {
-            block_get_optimal_unchecked(block);
-            if (!block_is_null(block)) {
-                result = block_check(block);
-                cre_generation_block_result(block, result, main_config->account, main_config->key);
-            }
-        }
-        {
-            block_get_optimal_checked(block, &result);
-            if (!block_is_null(block)) {
-                if (result) {
-                    block_save(block, 1);
-                } else {
-                    block_save(block, 0);
-                }
-            }
-        }
-    }
-    block_free(block);
-    return NULL;
+// TLV Methods
+void config_set_tlv(struct config_st *res, const struct string_st *tlv) {
+    if (res == NULL) return;
+    config_clear(res);
+    if (string_is_null(tlv) || tlv_get_tag(tlv->data) != TLV_CONFIG) return;
+    char *data = tlv_get_value(tlv->data);
+    struct string_st *_tlv = string_new();
+
+    data = tlv_get_next_tlv(data, _tlv);
+    network_p2p_set_hosts(res->network, _tlv);
+
+    data = tlv_get_next_tlv(data, _tlv);
+    account_set_tlv(res->account, _tlv);
+
+    data = tlv_get_next_tlv(data, _tlv);
+    string_set_tlv(res->key, _tlv);
+
+    tlv_get_next_tlv(data, _tlv);
+    integer_set_tlv(res->full_freeze, _tlv);
+
+    string_free(_tlv);
+}
+void config_get_tlv(const struct config_st *config, struct string_st *res) {
+    if (res == NULL) return;
+    if (config == NULL) return string_clear(res);
+
+    struct string_st *tlv = string_new();
+    network_p2p_get_hosts(config->network, res);
+
+    account_get_tlv(config->account, tlv);
+    string_concat(res, tlv);
+
+    string_get_tlv(config->key, tlv);
+    string_concat(res, tlv);
+
+    integer_get_tlv(config->full_freeze, tlv);
+    string_concat(res, tlv);
+
+    tlv_set_string(res, TLV_CONFIG, res);
+    string_free(tlv);
 }
 
+// Local Data Methods
+void config_save_local(const struct config_st *config) {
+    if (config == NULL) return;
+
+    struct string_st *path = string_new();
+    struct string_st *tlv = string_new();
+
+    string_set_str(path, ".data", 5);
+    mkdir(path->data, 0777);
+
+    string_set_str(path, ".data/config.skr", 19);
+
+    config_get_tlv(config, tlv);
+    file_write(path, tlv);
+
+    string_free(tlv);
+    string_free(path);
+}
+void config_load(struct config_st *config) {
+    if (config == NULL) return;
+
+    struct string_st *path = string_new();
+    struct string_st *tlv = string_new();
+    string_set_str(path, ".data/config.skr", 19);
+
+    file_read(path, tlv);
+    if (tlv->size != 0) config_set_tlv(config, tlv);
+
+    string_free(tlv);
+    string_free(path);
+}
+
+// NetWork Methods
 void config_server_start() {
     if (main_config == NULL) main_config = config_new();
     if (account_is_null(main_config->account)) return;
@@ -164,7 +210,6 @@ void config_server_close() {
     main_config->_is_server = 0;
 }
 
-
 void config_network_get(const struct string_st *data, struct string_st *response) {
     if (main_config == NULL) main_config = config_new();
     network_p2p_get(main_config->network, data, response);
@@ -174,6 +219,8 @@ void config_network_send(const struct string_st *data) {
     network_p2p_send(main_config->network, data);
 }
 
+
+// Class Methods
 void config_account_log_in(const struct string_st *login, const struct string_st *password) {
     if (main_config == NULL) main_config = config_new();
     struct account_st *account = account_new();
@@ -311,45 +358,4 @@ void config_make_pre_transaction(struct pre_transaction *res, struct string_st *
 
     currency_free(Currency);
     string_free(w_key);
-}
-
-void config_set_tlv(struct config_st *res, const struct string_st *tlv) {
-    if (res == NULL) return;
-    config_clear(res);
-    if (string_is_null(tlv) || tlv_get_tag(tlv->data) != TLV_CONFIG) return;
-    char *data = tlv_get_value(tlv->data);
-    struct string_st *_tlv = string_new();
-
-    data = tlv_get_next_tlv(data, _tlv);
-    network_p2p_set_hosts(res->network, _tlv);
-
-    data = tlv_get_next_tlv(data, _tlv);
-    account_set_tlv(res->account, _tlv);
-
-    data = tlv_get_next_tlv(data, _tlv);
-    string_set_tlv(res->key, _tlv);
-
-    tlv_get_next_tlv(data, _tlv);
-    integer_set_tlv(res->full_freeze, _tlv);
-
-    string_free(_tlv);
-}
-void config_get_tlv(const struct config_st *config, struct string_st *res) {
-    if (res == NULL) return;
-    if (config == NULL) return string_clear(res);
-
-    struct string_st *tlv = string_new();
-    network_p2p_get_hosts(config->network, res);
-
-    account_get_tlv(config->account, tlv);
-    string_concat(res, tlv);
-
-    string_get_tlv(config->key, tlv);
-    string_concat(res, tlv);
-
-    integer_get_tlv(config->full_freeze, tlv);
-    string_concat(res, tlv);
-
-    tlv_set_string(res, TLV_CONFIG, res);
-    string_free(tlv);
 }
