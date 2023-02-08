@@ -1,6 +1,5 @@
 #include "sakaar.h"
 #include "crypto_base.h"
-#include <sys/stat.h>
 
 struct config_st *main_config = NULL;
 

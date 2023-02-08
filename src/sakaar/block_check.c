@@ -1,6 +1,4 @@
 #include "sakaar.h"
-#include <sys/stat.h>
-#include <dirent.h>
 #include "crypto_base.h"
 
 struct currency_st *get_from_all_currency(struct list_st *all_currencies, struct string_st *cr) {

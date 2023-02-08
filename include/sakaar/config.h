@@ -1,10 +1,9 @@
 #ifndef SMART_CONFIG_H
 #define SMART_CONFIG_H
 
-#include "struct.h"
+#include "basic.h"
 #include "time.h"
 #include "network.h"
-#include "pre_transaction.h"
 
 struct account_st;
 struct config_st {
@@ -53,7 +52,5 @@ void config_get_tlv(const struct config_st *config, struct string_st *res);
 
 void config_save_local(const struct config_st *);
 void config_load(struct config_st *);
-
-
 
 #endif //SMART_CONFIG_H

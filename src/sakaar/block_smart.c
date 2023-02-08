@@ -1,13 +1,5 @@
 #include "sakaar.h"
 
-int che_block_smart_currency_create(const struct string_st *res);
-int che_block_smart_wallet_connect(const struct string_st *res);
-int che_block_smart_wallet_disconnect(const struct string_st *res);
-int che_block_smart_account_create(const struct string_st *res);
-int che_block_smart_account_freeze(const struct string_st *res);
-int che_block_smart_account_activate(const struct string_st *res);
-int che_block_smart_account_deactivate(const struct string_st *res);
-
 int block_smart_check(const struct string_st *res){
     switch (tlv_get_tag(res->data)) {
         case TLV_SMRT_CURRENCY_CREATE:
@@ -27,15 +19,6 @@ int block_smart_check(const struct string_st *res){
     }
     return 0;
 }
-
-void mk_block_smart_currency_create(const struct string_st *res);
-void mk_block_smart_wallet_connect(const struct string_st *res);
-void mk_block_smart_wallet_disconnect(const struct string_st *res);
-void mk_block_smart_account_create(const struct string_st *res);
-void mk_block_smart_account_freeze(const struct string_st *res);
-void mk_block_smart_account_activate(const struct string_st *res);
-void mk_block_smart_account_deactivate(const struct string_st *res);
-
 void block_smart_make(const struct string_st *res){
     switch (tlv_get_tag(res->data)) {
         case TLV_SMRT_CURRENCY_CREATE:
