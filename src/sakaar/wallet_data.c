@@ -20,6 +20,16 @@ void wallet_data_save_local(const struct wallet_data *data) {
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+    string_set_str(path, ".data/wallet_data/", 18);
+    mkdir(path->data);
+    string_concat(path, data->currency);
+    string_set_str(tlv, "/", 1);
+    string_concat(path, tlv);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
     string_set_str(path, ".data/wallet_data/", 18);
@@ -28,6 +38,7 @@ void wallet_data_save_local(const struct wallet_data *data) {
     string_set_str(tlv, "/", 1);
     string_concat(path, tlv);
     mkdir(path->data, 0777);
+#endif
 
     tlv_beautify(data->address, tlv);
     string_concat(path, tlv);

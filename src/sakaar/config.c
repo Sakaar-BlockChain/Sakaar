@@ -8,7 +8,11 @@ void blocks_restore();
 int block_check(const struct block_st *block);
 void block_save(const struct block_st *block, int result);
 
+#ifdef WIN32
+DWORD WINAPI block_checker(void *arg) {
+#else
 void *block_checker(void *arg) {
+#endif
     struct block_st *block = block_new();
     int result;
     while (main_config->_is_server) {
@@ -31,9 +35,12 @@ void *block_checker(void *arg) {
         }
     }
     block_free(block);
+#ifdef WIN32
+    return 0;
+#else
     return NULL;
+#endif
 }
-
 
 void config_request_get(const struct string_st *data, struct string_st *response) {
     if (response == NULL) return;
@@ -165,8 +172,13 @@ void config_save_local(const struct config_st *config) {
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
+#endif
 
     string_set_str(path, ".data/config.skr", 19);
 
@@ -197,12 +209,19 @@ void config_server_start() {
     network_p2p_start(main_config->network);
     main_config->_is_server = 1;
 
+#ifdef WIN32
+    HANDLE server_thread = CreateThread(NULL, 0, block_checker, NULL, 0, NULL);
+    if(server_thread){
+        blocks_restore();
+        config_account_activate();
+    }
+#else
     pthread_t server_thread;
     pthread_create(&server_thread, NULL, block_checker, NULL);
 
     blocks_restore();
-
     config_account_activate();
+#endif
 }
 void config_server_close() {
     if (main_config == NULL) main_config = config_new();

@@ -14,6 +14,17 @@ void account_connections_save_local(const struct account_connections *accountCon
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+    string_set_str(path, ".data/account/", 14);
+    mkdir(path->data);
+    tlv_beautify(accountConnections->address, tlv);
+    string_concat(path, tlv);
+    string_set_str(tlv, "/", 1);
+    string_concat(path, tlv);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
     string_set_str(path, ".data/account/", 14);
@@ -23,6 +34,7 @@ void account_connections_save_local(const struct account_connections *accountCon
     string_set_str(tlv, "/", 1);
     string_concat(path, tlv);
     mkdir(path->data, 0777);
+#endif
 
     string_concat(path, accountConnections->currency);
     string_set_str(tlv, ".skr", 4);

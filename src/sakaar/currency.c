@@ -14,10 +14,17 @@ void currency_save_local(const struct currency_st *currency) {
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+    string_set_str(path, ".data/currency/", 15);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
     string_set_str(path, ".data/currency/", 15);
     mkdir(path->data, 0777);
+#endif
 
     string_concat(path, currency->name);
     string_set_str(tlv, ".skr", 4);

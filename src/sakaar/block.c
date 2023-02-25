@@ -15,10 +15,17 @@ void block_save_local(const struct block_st *block) {
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+    string_set_str(path, ".data/block_active/", 19);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
     string_set_str(path, ".data/block_active/", 19);
     mkdir(path->data, 0777);
+#endif
 
     integer_get_str(block->time, tlv);
     string_concat(path, tlv);

@@ -1,5 +1,8 @@
 #include "sakaar.h"
 #include "crypto_base.h"
+#ifdef WIN32
+#include <stdio.h>
+#endif
 
 int che_generation_wallet_create(const struct generation *res);
 int che_generation_account_username(const struct generation *res);
@@ -131,10 +134,17 @@ void generation_save_local(const struct generation *gen) {
     struct string_st *path = string_new();
     struct string_st *tlv = string_new();
 
+#ifdef WIN32
+    string_set_str(path, ".data", 5);
+    mkdir(path->data);
+    string_set_str(path, ".data/generation/", 17);
+    mkdir(path->data);
+#else
     string_set_str(path, ".data", 5);
     mkdir(path->data, 0777);
     string_set_str(path, ".data/generation/", 17);
     mkdir(path->data, 0777);
+#endif
 
     integer_get_str(gen->time, tlv);
     string_concat(path, tlv);
